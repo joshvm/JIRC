@@ -18,8 +18,6 @@ public class ServerHandler extends ChannelInboundHandlerAdapter{
     static{
         addHandler(new RegisterHandler());
         addHandler(new LoginHandler());
-        addHandler(new AddFriendHandler());
-        addHandler(new RemoveFriendHandler());
         addHandler(new MessageHandler());
         addHandler(new ProfileInitHandler());
         addHandler(new UpdateNameHandler());

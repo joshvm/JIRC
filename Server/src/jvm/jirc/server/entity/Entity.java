@@ -1,5 +1,7 @@
 package jvm.jirc.server.entity;
 
+import jvm.jirc.server.log.Logging;
+
 import java.sql.Timestamp;
 import java.util.Date;
 
@@ -10,9 +12,13 @@ public abstract class Entity {
 
     private boolean initialized;
 
+    protected final Logging logging;
+
     protected Entity(final Timestamp timestamp, final int id){
         this.timestamp = timestamp;
         this.id = id;
+
+        logging = new Logging(this);
     }
 
     public Timestamp getTimestamp(){
@@ -39,6 +45,10 @@ public abstract class Entity {
             ex.printStackTrace();
             return initialized = false;
         }
+    }
+
+    public Logging getLogging(){
+        return logging;
     }
 
     public boolean equals(final Object o){

@@ -154,7 +154,7 @@ public class Channel extends Entity{
         sendExcept(pkt, null);
     }
 
-    public void load() throws Exception{
+    protected void load() throws Exception{
         final List<ChannelRank> list = Database.demandChannelRanks().get(id);
         list.forEach(this::addChannelRank);
     }

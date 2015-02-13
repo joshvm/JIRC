@@ -3,8 +3,8 @@ package jvm.jirc.server.sql;
 import com.mysql.jdbc.jdbc2.optional.MysqlConnectionPoolDataSource;
 import jvm.jirc.server.sql.channel.ChannelRanks;
 import jvm.jirc.server.sql.channel.Channels;
+import jvm.jirc.server.sql.log.Logs;
 import jvm.jirc.server.sql.profile.Profiles;
-import jvm.jirc.server.sql.relationship.Relationships;
 import org.skife.jdbi.v2.DBI;
 
 public final class Database {
@@ -14,7 +14,7 @@ public final class Database {
     private static Profiles profiles;
     private static Channels channels;
     private static ChannelRanks channelRanks;
-    private static Relationships relationships;
+    private static Logs logs;
 
     private Database(){}
 
@@ -27,9 +27,6 @@ public final class Database {
         dbi = new DBI(ds);
         try(final Profiles profiles = profiles()){
             profiles.init();
-        }
-        try(final Relationships relationships = relationships()){
-            relationships.init();
         }
         try(final Channels channels = channels()){
             channels.init();
@@ -57,10 +54,10 @@ public final class Database {
         return channelRanks;
     }
 
-    public static Relationships demandRelationships(){
-        if(relationships == null)
-            relationships = dbi.onDemand(Relationships.class);
-        return relationships;
+    public static Logs demandLogs(){
+        if(logs == null)
+            logs = dbi.onDemand(Logs.class);
+        return logs;
     }
 
     public static Profiles profiles(){
@@ -75,8 +72,8 @@ public final class Database {
         return dbi.open(ChannelRanks.class);
     }
 
-    public static Relationships relationships(){
-        return dbi.open(Relationships.class);
+    public static Logs logs(){
+        return dbi.open(Logs.class);
     }
 
 }

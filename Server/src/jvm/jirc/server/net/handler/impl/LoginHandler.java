@@ -39,9 +39,7 @@ public class LoginHandler extends PacketHandler {
             }
             ctx.writeAndFlush(reply(GOOD));
             ctx.writeAndFlush(Opcode.INIT.create(profile));
-            profile.getFriends().values().forEach(
-                    f -> profile.send(Opcode.ADD_FRIEND.create(f))
-            );
+            //add friends
             profile.addConnection(ctx);
         }catch(Exception ex){
             ex.printStackTrace();

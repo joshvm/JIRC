@@ -25,10 +25,6 @@ public class MessageHandler extends ProfilePacketHandler{
             profile.send(Opcode.SERVER_MESSAGE.create("Player not online: " + to.getName()));
             return;
         }
-        if(!to.getFriends().containsKey(profile.getId())){
-            profile.send(Opcode.SERVER_MESSAGE.create("This player is not your friend"));
-            return;
-        }
         final Packet out = Opcode.MESSAGE.create(profile, to, msg);
         profile.send(out);
         to.send(out);

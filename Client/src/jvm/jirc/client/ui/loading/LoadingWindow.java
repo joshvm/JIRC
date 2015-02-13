@@ -46,6 +46,11 @@ public class LoadingWindow extends JFrame {
     private void initFinished(){
         info("Get Ready To JIRC, " + ProfileManager.getInstance().getMyProfile().getUser());
         new Thread(() -> {
+            try{
+                Thread.sleep(2000);
+            }catch(InterruptedException e){
+                e.printStackTrace();
+            }
             Utils.hide(this);
             info(DEFAULT_INFO);
             if(!Connection.connected())

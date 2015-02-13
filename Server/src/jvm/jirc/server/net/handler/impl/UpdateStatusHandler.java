@@ -26,7 +26,6 @@ public class UpdateStatusHandler extends ProfilePacketHandler {
         }
         final Packet out = reply(profile);
         profile.send(out);
-        profile.getFriends().values().forEach(f -> f.send(out));
-        profile.getChannels().forEach(c -> c.sendExcept(out, profile));
+        profile.getInteractingProfiles().forEach(p -> p.send(out));
     }
 }

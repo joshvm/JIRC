@@ -8,7 +8,6 @@ import jvm.jirc.server.net.packet.Opcode;
 import jvm.jirc.server.net.packet.Packet;
 import jvm.jirc.server.sql.Database;
 import jvm.jirc.server.sql.profile.Profiles;
-import jvm.jirc.server.sql.relationship.Relationships;
 import jvm.jirc.server.util.Utils;
 
 import java.sql.Timestamp;
@@ -19,7 +18,6 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
-import java.util.stream.Collectors;
 
 public class Profile extends Entity {
 
@@ -34,7 +32,6 @@ public class Profile extends Entity {
 
     private final List<ChannelHandlerContext> ctxs;
     private final Map<Integer, Channel> channels;
-    private final Map<Relationship.Type, Map<Integer, Relationship>> relationships;
 
     public Profile(final Timestamp timestamp, final int id, final String user, final String pass, final Rank rank, final String name, final Status status){
         super(timestamp, id);
@@ -47,8 +44,6 @@ public class Profile extends Entity {
         ctxs = new ArrayList<>();
 
         channels = new HashMap<>();
-
-        relationships = new HashMap<>();
     }
 
     public Profile(final int id, final String user, final String pass){
@@ -198,65 +193,15 @@ public class Profile extends Entity {
         return channels.values();
     }
 
-    public boolean addRelationship(final Relationship.Type type, final int other, final boolean update){
-        final Relationship relationship = new Relationship(type, id, other);
-        addRelationship(relationship);
-        if(!update)
-            return true;
-        try(final Relationships relationships = Database.relationships()){
-            relationships.insert(relationship);
-            return true;
-        }catch(Exception ex){
-            ex.printStackTrace();
-            removeRelationship(relationship);
-            return false;
-        }
-    }
-
-    public boolean removeRelationship(final Relationship.Type type, final int other, final boolean update){
-        final Relationship relationship = relationships.get(type).get(other);
-        if(relationship == null)
-            return true;
-        removeRelationship(relationship);
-        if(!update)
-            return true;
-        try(final Relationships relationships = Database.relationships()){
-            relationships.delete(relationship);
-            return true;
-        }catch(Exception ex){
-            ex.printStackTrace();
-            addRelationship(relationship);
-            return false;
-        }
-    }
-
-    public Map<Integer, Profile> getFriends(){
-        if(!relationships.containsKey(Relationship.Type.FRIEND))
-            return new HashMap<>();
-        return relationships.get(Relationship.Type.FRIEND).values().stream().collect(
-                Collectors.toMap(Relationship::getToId, Relationship::getTo)
-        );
-    }
-
     public Set<Profile> getInteractingProfiles(){
         final Set<Profile> profiles = new HashSet<>();
-        profiles.addAll(getFriends().values());
+        //profiles.addAll(getFriends().values());
         getChannels().forEach(c -> profiles.addAll(c.getProfiles().values()));
         return profiles;
     }
 
-    private void addRelationship(final Relationship relationship){
-        if(!relationships.containsKey(relationship.getType()))
-            relationships.put(relationship.getType(), new HashMap<>());
-        relationships.get(relationship.getType()).put(relationship.getToId(), relationship);
-    }
-
-    private void removeRelationship(final Relationship relationship){
-        relationships.get(relationship.getType()).remove(relationship.getToId());
-    }
-
-    public void load() throws Exception{
-        Database.demandRelationships().get(id).forEach(this::addRelationship);
+    protected void load() throws Exception{
+        //load friends
     }
 
     public void dispose(){
