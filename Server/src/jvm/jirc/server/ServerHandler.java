@@ -22,6 +22,8 @@ public class ServerHandler extends ChannelInboundHandlerAdapter{
         addHandler(new ProfileInitHandler());
         addHandler(new UpdateNameHandler());
         addHandler(new UpdateStatusHandler());
+        addHandler(new JoinChannelHandler());
+        addHandler(new LeaveChannelHandler());
     }
 
     public void handlerRemoved(final ChannelHandlerContext ctx){

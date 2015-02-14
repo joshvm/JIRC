@@ -90,14 +90,22 @@ public class Channel extends Entity{
         return profiles;
     }
 
+    public boolean contains(final Profile profile){
+        return profiles.containsKey(profile.getId());
+    }
+
     public void join(final Profile profile){
         profile.addChannel(this);
         logging.push(Log.joinChannel(this, profile));
+        send(Opcode.JOIN_CHANNEL.create(profile));
     }
 
     public void leave(final Profile profile){
         profile.removeChannel(this);
         logging.push(Log.leaveChannel(this, profile));
+        final Packet out = Opcode.LEAVE_CHANNEL.create(profile);
+        profile.send(out);
+        send(out);
     }
 
     public Rank getRank(final int profileId){

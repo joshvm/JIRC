@@ -20,6 +20,7 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
+import java.util.stream.Collectors;
 
 public class Profile extends Entity {
 
@@ -189,6 +190,10 @@ public class Profile extends Entity {
         ctxs.forEach(ctx -> ctx.writeAndFlush(pkt));
     }
 
+    public void sendServerMessage(final String fmt, final Object... args){
+        send(Opcode.SERVER_MESSAGE.create(String.format(fmt, args)));
+    }
+
     public boolean inChannel(final Channel channel){
         return channels.containsKey(channel.getId());
     }
@@ -209,9 +214,39 @@ public class Profile extends Entity {
 
     public Set<Profile> getInteractingProfiles(){
         final Set<Profile> profiles = new HashSet<>();
-        //profiles.addAll(getFriends().values());
+        profiles.addAll(getFriends().values());
         getChannels().forEach(c -> profiles.addAll(c.getProfiles().values()));
         return profiles;
+    }
+
+    public Relationship getRelationship(final Profile profile){
+        return relationships.getOrDefault(id, new Relationship(this, profile, Relationship.Type.NONE));
+    }
+
+    private boolean isRelationship(final Profile profile, final Relationship.Type type){
+        return getRelationship(profile).getType() == type;
+    }
+
+    public boolean isFriend(final Profile profile){
+        return isRelationship(profile, Relationship.Type.FRIEND);
+    }
+
+    public boolean isBlocked(final Profile profile){
+        return isRelationship(profile, Relationship.Type.BLOCKED);
+    }
+
+    private Map<Integer, Profile> getRelationships(final Relationship.Type type){
+        return relationships.values().stream().filter(
+                r -> r.getType() == type
+        ).collect(Collectors.toMap(Relationship::getTargetId, Relationship::getTarget));
+    }
+
+    public Map<Integer, Profile> getFriends(){
+        return getRelationships(Relationship.Type.FRIEND);
+    }
+
+    public Map<Integer, Profile> getBlocked(){
+        return getRelationships(Relationship.Type.BLOCKED);
     }
 
     private void addRelationship(final Relationship relationship){

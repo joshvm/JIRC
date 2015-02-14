@@ -9,7 +9,7 @@ import java.sql.Timestamp;
 public class Relationship extends Entity {
 
     public enum Type{
-        FRIEND, BLOCKED
+        NONE, FRIEND, BLOCKED
     }
 
     private final int targetId;

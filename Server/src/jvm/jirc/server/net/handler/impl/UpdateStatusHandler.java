@@ -17,11 +17,11 @@ public class UpdateStatusHandler extends ProfilePacketHandler {
         final int statusIdx = pkt.readByte();
         final Status status = Status.forIndex(statusIdx);
         if(status == null){
-            ctx.writeAndFlush(Opcode.SERVER_MESSAGE.create("Invalid status"));
+            profile.sendServerMessage("Invalid status: %s", statusIdx);
             return;
         }
         if(!profile.setStatus(status, true)){
-            profile.send(Opcode.SERVER_MESSAGE.create("Error changing status"));
+            profile.sendServerMessage("Error changing status");
             return;
         }
         final Packet out = reply(profile);
