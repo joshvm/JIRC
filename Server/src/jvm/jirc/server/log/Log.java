@@ -47,6 +47,22 @@ public class Log {
         this(Utils.timestamp(), type, entity.getId(), String.format(fmt, args));
     }
 
+    public Timestamp getTimestamp(){
+        return timestamp;
+    }
+
+    public Type getType(){
+        return type;
+    }
+
+    public int getEntityId(){
+        return entityId;
+    }
+
+    public String getInfo(){
+        return info;
+    }
+
     public static Log login(final Profile profile, final ChannelHandlerContext ctx){
         return new Log(Type.LOGIN, profile, Utils.ip(ctx));
     }
