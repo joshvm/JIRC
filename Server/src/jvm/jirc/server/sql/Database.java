@@ -5,6 +5,7 @@ import jvm.jirc.server.sql.channel.ChannelRanks;
 import jvm.jirc.server.sql.channel.Channels;
 import jvm.jirc.server.sql.log.Logs;
 import jvm.jirc.server.sql.profile.Profiles;
+import jvm.jirc.server.sql.relationship.Relationships;
 import org.skife.jdbi.v2.DBI;
 
 public final class Database {
@@ -12,6 +13,7 @@ public final class Database {
     private static DBI dbi;
 
     private static Profiles profiles;
+    private static Relationships relationships;
     private static Channels channels;
     private static ChannelRanks channelRanks;
     private static Logs logs;
@@ -28,6 +30,9 @@ public final class Database {
         try(final Profiles profiles = profiles()){
             profiles.init();
         }
+        try(final Relationships relationships = relationships()){
+            relationships.init();
+        }
         try(final Channels channels = channels()){
             channels.init();
         }
@@ -40,6 +45,12 @@ public final class Database {
         if(profiles == null)
             profiles = dbi.onDemand(Profiles.class);
         return profiles;
+    }
+
+    public static Relationships demandRelationships(){
+        if(relationships == null)
+            relationships = dbi.onDemand(Relationships.class);
+        return relationships;
     }
 
     public static Channels demandChannels(){
@@ -62,6 +73,10 @@ public final class Database {
 
     public static Profiles profiles(){
         return dbi.open(Profiles.class);
+    }
+
+    public static Relationships relationships(){
+        return dbi.open(Relationships.class);
     }
 
     public static Channels channels(){

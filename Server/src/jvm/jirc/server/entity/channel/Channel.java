@@ -3,10 +3,10 @@ package jvm.jirc.server.entity.channel;
 import jvm.jirc.server.entity.Entity;
 import jvm.jirc.server.entity.profile.Profile;
 import jvm.jirc.server.entity.profile.Rank;
+import jvm.jirc.server.log.Log;
 import jvm.jirc.server.net.packet.Opcode;
 import jvm.jirc.server.net.packet.Packet;
 import jvm.jirc.server.sql.Database;
-import jvm.jirc.server.sql.channel.ChannelRanks;
 import jvm.jirc.server.sql.channel.Channels;
 import jvm.jirc.server.util.Utils;
 
@@ -65,14 +65,15 @@ public class Channel extends Entity{
     }
 
     public boolean setDescription(final String description, final boolean update){
-        if(!update){
-            this.description = description;
-            return true;
-        }
         final String oldDescription = this.description;
         this.description = description;
+        if(!update){
+            logging.push(Log.changeChannelDescription(this, oldDescription, description));
+            return true;
+        }
         try(final Channels channels = Database.channels()){
             channels.updateDescription(this);
+            logging.push(Log.changeChannelDescription(this, oldDescription, description));
             return true;
         }catch(Exception ex){
             this.description = oldDescription;
@@ -91,57 +92,34 @@ public class Channel extends Entity{
 
     public void join(final Profile profile){
         profile.addChannel(this);
+        logging.push(Log.joinChannel(this, profile));
     }
 
     public void leave(final Profile profile){
         profile.removeChannel(this);
-    }
-
-    public boolean addChannelRank(final int profileId, final Rank rank, final boolean update){
-        final ChannelRank channelRank = new ChannelRank(id, profileId, rank);
-        addChannelRank(channelRank);
-        if(!update)
-            return true;
-        try(final ChannelRanks channelRanks = Database.channelRanks()){
-            channelRanks.insert(channelRank);
-            return true;
-        }catch(Exception ex){
-            ex.printStackTrace();
-            removeChannelRank(channelRank);
-            return false;
-        }
-    }
-
-    public boolean removeChannelRank(final int profileId, final boolean update){
-        final ChannelRank channelRank = ranks.get(profileId);
-        removeChannelRank(channelRank);
-        if(!update)
-            return true;
-        try(final ChannelRanks channelRanks = Database.channelRanks()){
-            channelRanks.delete(channelRank);
-            return true;
-        }catch(Exception ex){
-            ex.printStackTrace();
-            addChannelRank(channelRank);
-            return false;
-        }
+        logging.push(Log.leaveChannel(this, profile));
     }
 
     public Rank getRank(final int profileId){
-        final ChannelRank rank = getChannelRank(profileId);
-        return rank == null ? Rank.NONE : rank.getRank();
+        return getChannelRank(profileId).getRank();
     }
 
     public ChannelRank getChannelRank(final int profileId){
-        return ranks.get(profileId);
+        return ranks.getOrDefault(profileId, new ChannelRank(id, profileId, Rank.NONE));
     }
 
-    private void addChannelRank(final ChannelRank rank){
+    public void addChannelRank(final ChannelRank rank){
         ranks.put(rank.getProfileId(), rank);
     }
 
-    private void removeChannelRank(final ChannelRank rank){
+    public void removeChannelRank(final ChannelRank rank){
         ranks.remove(rank.getProfileId());
+    }
+
+    public void message(final Profile profile, final String msg){
+        profile.getLogging().push(Log.channelMessage(profile, this, msg));
+        logging.push(Log.message(this, profile, msg));
+        send(Opcode.CHANNEL_MESSAGE.create(this, profile, msg));
     }
 
     public void sendExcept(final Packet pkt, final Profile exception){

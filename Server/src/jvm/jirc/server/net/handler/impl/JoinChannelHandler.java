@@ -21,6 +21,6 @@ public class JoinChannelHandler extends ProfilePacketHandler{
             profile.send(Opcode.SERVER_MESSAGE.create("Error finding channel"));
             return;
         }
-        
+        channel.join(profile);
     }
 }

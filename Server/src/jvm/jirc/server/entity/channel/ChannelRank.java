@@ -1,6 +1,9 @@
 package jvm.jirc.server.entity.channel;
 
+import jvm.jirc.server.Server;
+import jvm.jirc.server.entity.profile.Profile;
 import jvm.jirc.server.entity.profile.Rank;
+import jvm.jirc.server.log.Log;
 import jvm.jirc.server.sql.Database;
 import jvm.jirc.server.sql.channel.ChannelRanks;
 
@@ -24,8 +27,16 @@ public class ChannelRank {
         return channelId;
     }
 
+    public Channel getChannel(){
+        return Server.getChannelManager().get(channelId, false);
+    }
+
     public int getProfileId(){
         return profileId;
+    }
+
+    public Profile getProfile(){
+        return Server.getProfileManager().get(profileId, false);
     }
 
     public Rank getRank(){
@@ -33,14 +44,22 @@ public class ChannelRank {
     }
 
     public boolean setRank(final Rank rank, final boolean update){
-        if(!update){
-            this.rank = rank;
-            return true;
-        }
         final Rank oldRank = this.rank;
         this.rank = rank;
+        if(!update){
+            getChannel().getLogging().push(Log.changeChannelRank(getChannel(), getProfile(), oldRank, rank));
+            return true;
+        }
         try(final ChannelRanks channelRanks = Database.channelRanks()){
-            channelRanks.updateRank(this);
+            if(oldRank == Rank.NONE){
+                channelRanks.insert(this);
+                getChannel().addChannelRank(this);
+            }else if(rank == Rank.NONE){
+                channelRanks.delete(this);
+                getChannel().removeChannelRank(this);
+            }else
+                channelRanks.updateRank(this);
+            getChannel().getLogging().push(Log.changeChannelRank(getChannel(), getProfile(), oldRank, rank));
             return true;
         }catch(Exception ex){
             ex.printStackTrace();

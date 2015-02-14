@@ -6,12 +6,11 @@ import org.skife.jdbi.v2.sqlobject.BindBean;
 import org.skife.jdbi.v2.sqlobject.SqlQuery;
 import org.skife.jdbi.v2.sqlobject.SqlUpdate;
 import org.skife.jdbi.v2.sqlobject.customizers.RegisterMapper;
-import org.skife.jdbi.v2.sqlobject.mixins.Transactional;
 
 import java.util.List;
 
 @RegisterMapper(ChannelRankMapper.class)
-public interface ChannelRanks extends Transactional<ChannelRanks>, AutoCloseable{
+public interface ChannelRanks extends AutoCloseable{
 
     @SqlQuery("SELECT * FROM channelranks WHERE channelId = :channelId")
     List<ChannelRank> get(@Bind("channelId") final int channelId);

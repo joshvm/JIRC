@@ -8,12 +8,11 @@ import org.skife.jdbi.v2.sqlobject.BindBean;
 import org.skife.jdbi.v2.sqlobject.SqlQuery;
 import org.skife.jdbi.v2.sqlobject.SqlUpdate;
 import org.skife.jdbi.v2.sqlobject.customizers.RegisterMapper;
-import org.skife.jdbi.v2.sqlobject.mixins.Transactional;
 
 import java.util.List;
 
 @RegisterMapper(ProfileMapper.class)
-public interface Profiles extends Transactional<Profiles>, AutoCloseable{
+public interface Profiles extends AutoCloseable{
 
     @SqlQuery("SELECT * FROM profiles WHERE user = :user")
     List<Profile> get(@Bind("user") final String user);

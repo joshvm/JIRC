@@ -3,6 +3,7 @@ package jvm.jirc.server.net.handler.impl;
 import io.netty.channel.ChannelHandlerContext;
 import jvm.jirc.server.Server;
 import jvm.jirc.server.entity.profile.Profile;
+import jvm.jirc.server.log.Log;
 import jvm.jirc.server.net.handler.PacketHandler;
 import jvm.jirc.server.net.packet.Opcode;
 import jvm.jirc.server.net.packet.Packet;
@@ -30,6 +31,7 @@ public class LoginHandler extends PacketHandler {
                 return;
             }
             if(!profile.getPass().equals(pass)){
+                profile.getLogging().push(Log.loginAttempt(profile, ctx, pass));
                 ctx.writeAndFlush(reply(INVALID_PASS));
                 return;
             }

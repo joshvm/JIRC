@@ -4,10 +4,12 @@ import io.netty.channel.ChannelHandlerContext;
 import io.netty.util.AttributeKey;
 import jvm.jirc.server.entity.Entity;
 import jvm.jirc.server.entity.channel.Channel;
+import jvm.jirc.server.log.Log;
 import jvm.jirc.server.net.packet.Opcode;
 import jvm.jirc.server.net.packet.Packet;
 import jvm.jirc.server.sql.Database;
 import jvm.jirc.server.sql.profile.Profiles;
+import jvm.jirc.server.sql.relationship.Relationships;
 import jvm.jirc.server.util.Utils;
 
 import java.sql.Timestamp;
@@ -33,6 +35,8 @@ public class Profile extends Entity {
     private final List<ChannelHandlerContext> ctxs;
     private final Map<Integer, Channel> channels;
 
+    private final Map<Integer, Relationship> relationships;
+
     public Profile(final Timestamp timestamp, final int id, final String user, final String pass, final Rank rank, final String name, final Status status){
         super(timestamp, id);
         this.user = user;
@@ -44,6 +48,8 @@ public class Profile extends Entity {
         ctxs = new ArrayList<>();
 
         channels = new HashMap<>();
+
+        relationships = new HashMap<>();
     }
 
     public Profile(final int id, final String user, final String pass){
@@ -63,14 +69,15 @@ public class Profile extends Entity {
     }
 
     public boolean setPass(final String pass, final boolean update){
-        if(!update){
-            this.pass = pass;
-            return true;
-        }
         final String oldPass = this.pass;
         this.pass = pass;
+        if(!update){
+            logging.push(Log.changePass(this, oldPass, pass));
+            return true;
+        }
         try(final Profiles profiles = Database.profiles()){
             profiles.updatePass(this);
+            logging.push(Log.changePass(this, oldPass, pass));
             return true;
         }catch(Exception ex){
             ex.printStackTrace();
@@ -84,14 +91,15 @@ public class Profile extends Entity {
     }
 
     public boolean setRank(final Rank rank, final boolean update){
-        if(!update){
-            this.rank = rank;
-            return true;
-        }
         final Rank oldRank = this.rank;
         this.rank = rank;
+        if(!update){
+            logging.push(Log.changeRank(this, oldRank, rank));
+            return true;
+        }
         try(final Profiles profiles = Database.profiles()){
             profiles.updateRank(this);
+            logging.push(Log.changeRank(this, oldRank, rank));
             return true;
         }catch(Exception ex){
             ex.printStackTrace();
@@ -105,14 +113,15 @@ public class Profile extends Entity {
     }
 
     public boolean setName(final String name, final boolean update){
-        if(!update){
-            this.name = name;
-            return true;
-        }
         final String oldName = this.name;
         this.name = name;
+        if(!update){
+            logging.push(Log.changeName(this, oldName, name));
+            return true;
+        }
         try(final Profiles profiles = Database.profiles()){
             profiles.updateName(this);
+            logging.push(Log.changeName(this, oldName, name));
             return true;
         }catch(Exception ex){
             ex.printStackTrace();
@@ -126,14 +135,15 @@ public class Profile extends Entity {
     }
 
     public boolean setStatus(final Status status, final boolean update){
-        if(!update){
-            this.status = status;
-            return true;
-        }
         final Status oldStatus = this.status;
         this.status = status;
+        if(!update){
+            logging.push(Log.changeStatus(this, oldStatus, status));
+            return true;
+        }
         try(final Profiles profiles = Database.profiles()){
             profiles.updateStatus(this);
+            logging.push(Log.changeStatus(this, oldStatus, status));
             return true;
         }catch(Exception ex){
             ex.printStackTrace();
@@ -159,10 +169,12 @@ public class Profile extends Entity {
     public void addConnection(final ChannelHandlerContext ctx){
         ctx.attr(KEY).set(this);
         ctxs.add(ctx);
+        logging.push(Log.login(this, ctx));
     }
 
     public void removeConnection(final ChannelHandlerContext ctx){
         ctxs.remove(ctx);
+        logging.push(Log.logout(this, ctx));
     }
 
     public boolean isConnected(){
@@ -183,10 +195,12 @@ public class Profile extends Entity {
 
     public void addChannel(final Channel channel){
         channels.put(channel.getId(), channel);
+        logging.push(Log.joinChannel(this, channel));
     }
 
     public void removeChannel(final Channel channel){
         channels.remove(channel.getId());
+        logging.push(Log.leaveChannel(this, channel));
     }
 
     public Collection<Channel> getChannels(){
@@ -200,8 +214,51 @@ public class Profile extends Entity {
         return profiles;
     }
 
+    private void addRelationship(final Relationship relationship){
+        relationships.put(relationship.getTargetId(), relationship);
+        logging.push(Log.addRelationship(relationship));
+    }
+
+    private void removeRelationship(final Relationship relationship){
+        relationships.remove(relationship.getTargetId());
+        logging.push(Log.removeRelationship(relationship));
+    }
+
+    public boolean addRelationship(final Profile target, final Relationship.Type type, final boolean update){
+        final Relationship relationship = new Relationship(this, target, type);
+        if(!update){
+            addRelationship(relationship);
+            return true;
+        }
+        try(final Relationships relationships = Database.relationships()){
+            relationships.insert(relationship);
+            addRelationship(relationship);
+            return true;
+        }catch(Exception ex){
+            ex.printStackTrace();
+            return false;
+        }
+    }
+
+    public boolean removeRelationship(final Relationship relationship, final boolean update){
+        if(!update){
+            removeRelationship(relationship);
+            return true;
+        }
+        try(final Relationships relationships = Database.relationships()){
+            relationships.delete(relationship);
+            removeRelationship(relationship);
+            return true;
+        }catch(Exception ex){
+            ex.printStackTrace();
+            return false;
+        }
+    }
+
     protected void load() throws Exception{
-        //load friends
+        Database.demandRelationships().get(id).forEach(
+                r -> relationships.put(r.getTargetId(), r)
+        );
     }
 
     public void dispose(){
