@@ -176,6 +176,8 @@ public class Profile extends Entity {
     public void removeConnection(final ChannelHandlerContext ctx){
         ctxs.remove(ctx);
         logging.push(Log.logout(this, ctx));
+        if(logging.save())
+            logging.clear();
     }
 
     public boolean isConnected(){

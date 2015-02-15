@@ -13,6 +13,7 @@ public class LogMapper implements ResultSetMapper<Log> {
         return new Log(
                 rs.getTimestamp("timestamp"),
                 Log.Type.valueOf(rs.getString("type")),
+                rs.getString("entityType"),
                 rs.getInt("entityId"),
                 rs.getString("info")
         );

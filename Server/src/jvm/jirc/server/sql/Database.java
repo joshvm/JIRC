@@ -39,6 +39,9 @@ public final class Database {
         try(final ChannelRanks channelRanks = channelRanks()){
             channelRanks.init();
         }
+        try(final Logs logs = logs()){
+            logs.init();
+        }
     }
 
     public static Profiles demandProfiles(){

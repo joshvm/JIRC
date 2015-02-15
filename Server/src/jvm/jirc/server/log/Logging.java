@@ -24,6 +24,10 @@ public class Logging {
         return entity;
     }
 
+    public String getEntityType(){
+        return entity.getClass().getSimpleName();
+    }
+
     public void clear(){
         logs.clear();
     }

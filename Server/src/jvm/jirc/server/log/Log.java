@@ -33,18 +33,20 @@ public class Log {
 
     private final Timestamp timestamp;
     private final Type type;
+    private final String entityType;
     private final int entityId;
     private final String info;
 
-    public Log(final Timestamp timestamp, final Type type, final int entityId, final String info){
+    public Log(final Timestamp timestamp, final Type type, final String entityType, final int entityId, final String info){
         this.timestamp = timestamp;
+        this.entityType = entityType;
         this.type = type;
         this.entityId = entityId;
         this.info = info;
     }
 
     private Log(final Type type, final Entity entity, final String fmt, final Object... args){
-        this(Utils.timestamp(), type, entity.getId(), String.format(fmt, args));
+        this(Utils.timestamp(), type, entity.getClass().getSimpleName(), entity.getId(), String.format(fmt, args));
     }
 
     public Timestamp getTimestamp(){
@@ -57,6 +59,10 @@ public class Log {
 
     public int getEntityId(){
         return entityId;
+    }
+
+    public String getEntityType(){
+        return entityType;
     }
 
     public String getInfo(){
